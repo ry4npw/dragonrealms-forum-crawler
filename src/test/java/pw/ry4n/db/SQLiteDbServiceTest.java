@@ -21,11 +21,13 @@ import pw.ry4n.parser.model.Post;
 public class SQLiteDbServiceTest {
 	private static final Logger logger = LoggerFactory.getLogger(SQLiteDbServiceTest.class);
 
+	private static final String DATABASE_NAME = "test.db";
+
 	SQLiteDbServiceImpl service;
 
 	@Test
 	public void testCreateDb() throws SQLException {
-		service = new SQLiteDbServiceImpl("test.db");
+		service = new SQLiteDbServiceImpl(DATABASE_NAME);
 
 		try {
 			HtmlParseData data = new HtmlParseData();
@@ -42,12 +44,10 @@ public class SQLiteDbServiceTest {
 			page.setParseData(data);
 
 			// 2. store dummy page
-			logger.debug("executing store");
 			service.store(page);
 
 			// 3. verify insert
-			logger.debug("executing select");
-			Connection connection = DriverManager.getConnection("jdbc:sqlite:sample.db");
+			Connection connection = DriverManager.getConnection("jdbc:sqlite:" + DATABASE_NAME);
 			Statement statement = connection.createStatement();
 			statement.setQueryTimeout(30); // set timeout to 30 sec.
 			ResultSet rs = statement.executeQuery("select * from webpage");
@@ -67,14 +67,28 @@ public class SQLiteDbServiceTest {
 
 	@Test
 	public void testInsertDuplicatePost() {
-		service = new SQLiteDbServiceImpl("test.db");
-		Post post = new Post("folder", 1L, "author", "1", "subject", "body");
+		try {
+			// test data
+			service = new SQLiteDbServiceImpl(DATABASE_NAME);
+			Post post = new Post("folder", 1L, "author", "1", "subject", "body");
 
-		// save duplicate post
-		service.store(post);
-		service.store(post);
+			// save duplicate post
+			service.store(post);
+			service.store(post);
 
-		// cleanup database
-		service.recreateSchema();
+			// check row count on database
+			Connection connection = DriverManager.getConnection("jdbc:sqlite:" + DATABASE_NAME);
+			Statement statement = connection.createStatement();
+			statement.setQueryTimeout(30); // set timeout to 30 sec.
+			ResultSet rs = statement.executeQuery("select count(*) as rows from post");
+			while (rs.next()) {
+				assertEquals(1L, rs.getLong("rows"));
+			}
+
+			// cleanup database
+			service.recreateSchema();
+		} catch (SQLException e) {
+			logger.error("Error in testInsertDuplicatePost()", e);
+		}
 	}
 }
