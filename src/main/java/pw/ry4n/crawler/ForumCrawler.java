@@ -1,11 +1,14 @@
-package pw.ry4n;
+package pw.ry4n.crawler;
 
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
-import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
+import pw.ry4n.db.SQLiteDbService;
+import pw.ry4n.db.SQLiteDbServiceImpl;
 
 public class ForumCrawler extends WebCrawler {
+	SQLiteDbService service = new SQLiteDbServiceImpl("forum.db");
+
 	/**
 	 * This method receives two parameters. The first parameter is the page in
 	 * which we have discovered this new url and the second parameter is the new
@@ -24,7 +27,8 @@ public class ForumCrawler extends WebCrawler {
 				|| href.startsWith("https://www.play.net/remote/validation.asp")
 				|| href.startsWith("http://forums.play.net/return_from_pdn")
 				|| href.equals("http://forums.play.net/forums"))
-				&& !href.contains("/thread/");
+				&& !href.contains("/thread/")
+				&& !href.contains("reply_to=");
 	}
 
 	/**
@@ -34,13 +38,7 @@ public class ForumCrawler extends WebCrawler {
 	@Override
 	public void visit(Page page) {
 		String url = page.getWebURL().getURL();
-		System.out.println("URL: " + url);
-
-		if (page.getParseData() instanceof HtmlParseData) {
-			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
-			String html = htmlParseData.getHtml();
-
-			System.out.println("Html length: " + html.length());
-		}
+ 		System.out.println("URL: " + url);
+		service.store(page);
 	}
 }

@@ -5,9 +5,11 @@ import edu.uci.ics.crawler4j.crawler.CrawlController;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
+import pw.ry4n.crawler.ForumCrawler;
 
-public class Controller {
+public class Launcher {
 	public static void main(String[] args) throws Exception {
+		// crawl storage folder for resumable crawling
 		String crawlStorageFolder = "target/data/crawl/root";
 		int numberOfCrawlers = 7;
 
@@ -29,6 +31,7 @@ public class Controller {
 		 * which are found in these pages
 		 */
 		controller.addSeed("http://forums.play.net/return_from_pdn?username=&tcode=20180104104244&authentication=&num=17218&type=legacy");
+		controller.addSeed("http://forums.play.net/forums/view_type?type=legacy");
 
 		/*
 		 * Start the crawl. This is a blocking operation, meaning that your code
