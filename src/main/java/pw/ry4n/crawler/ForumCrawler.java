@@ -1,5 +1,8 @@
 package pw.ry4n.crawler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.url.WebURL;
@@ -7,6 +10,8 @@ import pw.ry4n.db.SQLiteDbService;
 import pw.ry4n.db.SQLiteDbServiceImpl;
 
 public class ForumCrawler extends WebCrawler {
+	private static final Logger logger = LoggerFactory.getLogger(ForumCrawler.class);
+
 	SQLiteDbService service = new SQLiteDbServiceImpl("forum.db");
 
 	/**
@@ -38,7 +43,7 @@ public class ForumCrawler extends WebCrawler {
 	@Override
 	public void visit(Page page) {
 		String url = page.getWebURL().getURL();
- 		System.out.println("URL: " + url);
+ 		logger.debug("URL: " + url);
 		service.store(page);
 	}
 }

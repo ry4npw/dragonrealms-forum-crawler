@@ -3,17 +3,27 @@ package pw.ry4n.db;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
+import pw.ry4n.parser.model.Post;
 
 public class SQLiteDbServiceImpl implements SQLiteDbService {
+	private static final Logger logger = LoggerFactory.getLogger(SQLiteDbServiceImpl.class);
+
 	Connection connection;
 	String databaseName;
-	PreparedStatement insertKeyStatement;
+	PreparedStatement insertWebpageStatement;
+	PreparedStatement selectHtmlForUrlStatement;
+	PreparedStatement insertPostStatement;
 
 	public SQLiteDbServiceImpl() {
 		this("sqlite.db");
@@ -24,7 +34,7 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 			createDatabase(databaseName);
 		} catch (SQLException e) {
 			// create db failed.
-			System.err.println(e);
+			logger.error("Error in SQLiteDbServiceImpl constructor.", e);
 		}
 	}
 
@@ -33,14 +43,26 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 		this.databaseName = databaseName;
 		connection = DriverManager.getConnection("jdbc:sqlite:" + databaseName);
 
-		connection.createStatement()
-				.executeUpdate("CREATE TABLE IF NOT EXISTS webpage ( "
+		connection.createStatement().executeUpdate("CREATE TABLE IF NOT EXISTS webpage ( "
 						+ "  id integer primary key autoincrement,"
 						+ "  html text," + "  text text,"
 						+ "  url varchar(4096),"
 						+ "  seen DATETIME DEFAULT CURRENT_TIMESTAMP" + ")");
 
-		insertKeyStatement = connection.prepareStatement("insert into webpage(html, text, url) values(?,?,?)");
+		connection.createStatement().executeUpdate("CREATE TABLE IF NOT EXISTS post ( "
+				+ "  id integer primary key autoincrement,"
+				+ "  author text,"
+				+ "  folder text,"
+				+ "  post_number varchar(10),"
+				+ "  time text,"
+				+ "  subject text,"
+				+ "  body text,"
+				+ "  CONSTRAINT uc1 UNIQUE (post_number, folder)"
+				+ ")");
+
+		insertWebpageStatement = connection.prepareStatement("insert into webpage(html, text, url) values(?,?,?)");
+		insertPostStatement = connection.prepareStatement("insert into post(author, time, subject, body) values(?, ?, ?, ?)");
+		selectHtmlForUrlStatement = connection.prepareStatement("select html from webpage where url=?");
 	}
 
 	public void store(Page page) {
@@ -49,12 +71,12 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 
 				HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 
-				insertKeyStatement.setString(1, htmlParseData.getHtml());
-				insertKeyStatement.setString(2, htmlParseData.getText());
-				insertKeyStatement.setString(3, page.getWebURL().getURL());
-				insertKeyStatement.executeUpdate();
+				insertWebpageStatement.setString(1, htmlParseData.getHtml());
+				insertWebpageStatement.setString(2, htmlParseData.getText());
+				insertWebpageStatement.setString(3, page.getWebURL().getURL());
+				insertWebpageStatement.executeUpdate();
 			} catch (SQLException e) {
-				System.err.println(e);
+				logger.error("Error in store()", e);
 			}
 		}
 	}
@@ -65,17 +87,59 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 				connection.close();
 			} catch (SQLException e) {
 				// connection close failed.
-				System.err.println(e);
+				logger.error("Error closing JDBC connection.", e);
 			}
 		}
 	}
 
 	public void recreateSchema() {
 		try {
+			connection.createStatement().executeUpdate("DROP TABLE IF EXISTS post");
 			connection.createStatement().executeUpdate("DROP TABLE IF EXISTS webpage");
 			createDatabase(this.databaseName);
 		} catch (SQLException e) {
-			System.err.println(e);
+			logger.error("Error recreating schema", e);
 		}
+	}
+
+	public void store(Post post) {
+		try {
+			insertPostStatement.setString(1, post.getAuthor());
+			insertPostStatement.setString(2, post.getTime());
+			insertPostStatement.setString(3, post.getSubject());
+			insertPostStatement.setString(4, post.getBody());
+			insertPostStatement.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("Error in store()", e);
+		}
+	}
+
+	public List<String> getAllWebpageUrls() {
+		List<String> urls = new ArrayList<>();
+
+		try {
+			ResultSet rs = connection.createStatement().executeQuery("select url from webpage");
+			while (rs.next()) {
+				urls.add(rs.getString("url"));
+			}
+		} catch (SQLException e) {
+			logger.error("Error in getAllWebpageUrls()", e);
+		}
+
+		return urls;
+	}
+
+	@Override
+	public String getHtmlForUrl(String url) {
+		try {
+			selectHtmlForUrlStatement.setString(1, url);
+			ResultSet rs = selectHtmlForUrlStatement.executeQuery();
+			if (rs.next()) {
+				return rs.getString("html");
+			}
+		} catch (SQLException e) {
+			logger.error("Error in getHtmlForUrl()", e);
+		}
+		return null;
 	}
 }
