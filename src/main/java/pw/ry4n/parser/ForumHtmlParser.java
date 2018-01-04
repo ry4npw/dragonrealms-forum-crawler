@@ -21,6 +21,7 @@ public class ForumHtmlParser {
 	public static void main(String[] args) throws Exception {
 		for (String url : service.getAllWebpageUrls()) {
 			parsePost(url);
+			service.deleteWebpageByUrl(url);
 		}
 
 		service.close();
@@ -29,26 +30,28 @@ public class ForumHtmlParser {
 	private static List<Post> parsePost(String url) {
 		List<Post> posts = new ArrayList<>();
 
-		String html = service.getHtmlForUrl(url);
-		Document doc = Jsoup.parse(html);
-		StringBuilder folder = new StringBuilder();
-		Elements folderElements = doc.select(".content .parenting_tree").first().select("a");
-		boolean firstElement = true;
-		for (Element folderElement : folderElements) {
-			if (firstElement) {
-				firstElement = false;
-			} else {
-				folder.append(" / ");
+		List<String> htmls = service.getHtmlForUrl(url);
+		for (String html : htmls) {
+			Document doc = Jsoup.parse(html);
+			StringBuilder folder = new StringBuilder();
+			Elements folderElements = doc.select(".content .parenting_tree").first().select("a");
+			boolean firstElement = true;
+			for (Element folderElement : folderElements) {
+				if (firstElement) {
+					firstElement = false;
+				} else {
+					folder.append(" / ");
+				}
+				folder.append(folderElement.text());
 			}
-			folder.append(folderElement.text());
-		}
-		Elements postElements = doc.select(".post_master_container");
-		logger.debug("found " + postElements.size() + " posts on page.");
-		for (Element postElement : postElements) {
-			Post post = new Post(folder.toString(), Long.parseLong(postElement.select(".post_message_post_id").text()), postElement.select(".post_author_name").text(), postElement.select(".post_time").text().substring(3), postElement.select(".post_subject").text(),
-					postElement.select(".post_content_body").text());
-			logger.debug("saving " + post);
-			//service.store(post);
+			Elements postElements = doc.select(".post_master_container");
+			logger.debug("found " + postElements.size() + " posts on page.");
+			for (Element postElement : postElements) {
+				Post post = new Post(folder.toString(), Long.parseLong(postElement.select(".post_message_post_id").text()), postElement.select(".post_author_name").text(), postElement.select(".post_time").text().substring(3), postElement.select(".post_subject").text(),
+						postElement.select(".post_content_body").text());
+				logger.debug("saving " + post);
+				service.store(post);
+			}
 		}
 
 		return posts;

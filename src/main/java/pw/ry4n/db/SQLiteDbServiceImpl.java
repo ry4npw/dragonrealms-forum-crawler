@@ -24,6 +24,7 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 	PreparedStatement insertWebpageStatement;
 	PreparedStatement selectHtmlForUrlStatement;
 	PreparedStatement insertPostStatement;
+	PreparedStatement deleteWebpageByUrl;
 
 	public SQLiteDbServiceImpl() {
 		this("sqlite.db");
@@ -51,18 +52,19 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 
 		connection.createStatement().executeUpdate("CREATE TABLE IF NOT EXISTS post ( "
 				+ "  id integer primary key autoincrement,"
+				+ "  folder text NOT NULL,"
+				+ "  post_number varchar(10) NOT NULL,"
 				+ "  author text,"
-				+ "  folder text,"
-				+ "  post_number varchar(10),"
 				+ "  time text,"
 				+ "  subject text,"
 				+ "  body text,"
-				+ "  CONSTRAINT uc1 UNIQUE (post_number, folder)"
+				+ "  CONSTRAINT uc_post UNIQUE (post_number, folder)"
 				+ ")");
 
 		insertWebpageStatement = connection.prepareStatement("insert into webpage(html, text, url) values(?,?,?)");
-		insertPostStatement = connection.prepareStatement("insert into post(author, time, subject, body) values(?, ?, ?, ?)");
+		insertPostStatement = connection.prepareStatement("insert into post(folder, post_number, author, time, subject, body) values(?, ?, ?, ?, ?, ?)");
 		selectHtmlForUrlStatement = connection.prepareStatement("select html from webpage where url=?");
+		deleteWebpageByUrl = connection.prepareStatement("delete from webpage where url=?");
 	}
 
 	public void store(Page page) {
@@ -104,10 +106,12 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 
 	public void store(Post post) {
 		try {
-			insertPostStatement.setString(1, post.getAuthor());
-			insertPostStatement.setString(2, post.getTime());
-			insertPostStatement.setString(3, post.getSubject());
-			insertPostStatement.setString(4, post.getBody());
+			insertPostStatement.setString(1, post.getFolder());
+			insertPostStatement.setLong(2, post.getPostNumber());
+			insertPostStatement.setString(3, post.getAuthor());
+			insertPostStatement.setString(4, post.getTime());
+			insertPostStatement.setString(5, post.getSubject());
+			insertPostStatement.setString(6, post.getBody());
 			insertPostStatement.executeUpdate();
 		} catch (SQLException e) {
 			logger.error("Error in store()", e);
@@ -130,16 +134,29 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 	}
 
 	@Override
-	public String getHtmlForUrl(String url) {
+	public List<String> getHtmlForUrl(String url) {
+		List<String> htmls = new ArrayList<>();
+
 		try {
 			selectHtmlForUrlStatement.setString(1, url);
 			ResultSet rs = selectHtmlForUrlStatement.executeQuery();
-			if (rs.next()) {
-				return rs.getString("html");
+			while (rs.next()) {
+				htmls.add(rs.getString("html"));
 			}
 		} catch (SQLException e) {
 			logger.error("Error in getHtmlForUrl()", e);
 		}
-		return null;
+
+		return htmls;
+	}
+
+	@Override
+	public void deleteWebpageByUrl(String url) {
+		try {
+			deleteWebpageByUrl.setString(1, url);
+			deleteWebpageByUrl.executeUpdate();
+		} catch (SQLException e) {
+			logger.error("Error in deleteWebpageByUrl()", e);
+		}
 	}
 }

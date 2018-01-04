@@ -11,5 +11,6 @@ public interface SQLiteDbService {
 	void close();
 	void recreateSchema();
 	List<String> getAllWebpageUrls();
-	String getHtmlForUrl(String url);
+	List<String> getHtmlForUrl(String url);
+	void deleteWebpageByUrl(String url);
 }
