@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Play.net Forums Search</title>
+<style>
+body{font-family:Sans-Serif;color:#333333}
+h1{font-size:20px}
+.small{font-size:12px}
+input[type="text"]{width:400px;font-size:16px}
+.button{border:none;color:white;background-color:#555555;padding:4px 8px;font-size:16px}
+.hidden{display:none}
+.error{color:red;display:block}
+.date{color:#888888;font-size:12px}
+li{margin:0 0 16px 0}
+</style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-42461382-1"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-42461382-1');
+</script>
+<script src="js/pure.js"></script>
+</head>
+<body>
+<h1>DragonRealms Forum Search</h1>
+<p class="small">A simple text search for <a href="https://forums.play.net/forums/DragonRealms/view">Play.net DragonRealms Forums</a>. The search index was created on January 4, 2018; posts after this date are not included in the results.</p>
+
+<!-- Search box -->
+<span class="error"></span>
+<input id="search" type="text" value="" onkeypress="keypress(event)"/>
+<button class="button" onclick="submit()">Search</button>
+
+<span id="loading" class="hidden">Loading...</span>
+<!-- Pure.js HTML template -->
+<ol id="template" class="hidden">
+	<li>
+		<a target="_blank"></a> <span class="date"></span><br>
+		<span class="snippet"></span>
+	</li>
+</ol>
+
+<script>
+/*
+ * PureJS directive mapping the HTML template to JSON returned by search.
+ */
+var directive = {
+	// bind to the <li> element
+	'li': {
+		// for each result object in the unnamed data array
+		'result<-': {
+			'a': 'result.subject',
+			// use a function to create the forum link from the folder and id
+			'a@href': function(x) {
+				return 'https://forums.play.net/forums/'
+						// replace spaces with %20
+						+ x.item.folder.replace(/\s/g, '%20')
+						+ '/view/' + x.item.post_id;
+			},
+			'.date': 'result.date',
+			'.snippet': 'result.snippet'
+		}
+	}
+};
+
+/*
+ * Compile the Pure.js directive and template for re-use on subsequent searches.
+ */
+var compiled = $p('#template').compile(directive);
+
+/*
+ * Function called when the users presses a key in the input box.
+ */
+function keypress(event) {
+	if (event.which == 13 || event.keyCode == 13) {
+		// submit on enter
+		submit();
+	}
+	return false;
+}
+
+/*
+ * Submit the search to our REST service and render result.
+ */
+function submit() {
+	// hide errors on submit
+	document.getElementsByClassName("error")[0].innerHTML = '';
+
+	var searchString =  document.getElementById("search").value;
+
+	// make sure user typed at least 3 characters
+	if (searchString.length < 2) {
+		document.getElementsByClassName("error")[0].innerHTML = 'Your search must be at least 2 characters.';
+		return;
+	}
+
+	// show Loading message
+	document.getElementById("loading").classList.remove("hidden");
+
+	// AJAX call to get search results
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (this.readyState == 4 && this.status == 200) {
+			// render response json to the compiled template/directive
+			$p('#template').render(JSON.parse(this.responseText), compiled);
+			// hide Loading message
+			document.getElementById("loading").classList.add("hidden");
+			// show the results
+			document.getElementById("template").classList.remove("hidden");
+		}
+	};
+	xhttp.open("GET", "search.php?q=" + searchString, true);
+	xhttp.send();
+};
+</script>
+</body>
+</html>
