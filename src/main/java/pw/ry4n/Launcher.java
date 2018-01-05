@@ -15,7 +15,7 @@ public class Launcher {
 
 		CrawlConfig config = new CrawlConfig();
 		config.setCrawlStorageFolder(crawlStorageFolder);
-		config.setResumableCrawling(true);
+		config.setResumableCrawling(false);
 
 		/*
 		 * Instantiate the controller for this crawl.
@@ -30,7 +30,7 @@ public class Launcher {
 		 * URLs that are fetched and then the crawler starts following links
 		 * which are found in these pages
 		 */
-		controller.addSeed("http://forums.play.net/return_from_pdn?username=&tcode=20180104104244&authentication=&num=17218&type=legacy");
+		controller.addSeed("http://forums.play.net/return_from_pdn?username=&tcode=20180104182513&authentication=&num=33398");
 		controller.addSeed("http://forums.play.net/forums/view_type?type=legacy");
 
 		/*

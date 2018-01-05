@@ -1,5 +1,7 @@
 package pw.ry4n.crawler;
 
+import java.util.regex.Pattern;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +13,8 @@ import pw.ry4n.parser.ForumHtmlParser;
 
 public class ForumCrawler extends WebCrawler {
 	private static final Logger logger = LoggerFactory.getLogger(ForumCrawler.class);
+
+	private static final Pattern FILTER = Pattern.compile("\\/view\\/\\d+(\\?force_expansion=true)?$");
 
 	ForumHtmlParser parser = new ForumHtmlParser();
 
@@ -28,10 +32,11 @@ public class ForumCrawler extends WebCrawler {
 	public boolean shouldVisit(Page referringPage, WebURL url) {
 		String href = url.getURL().toLowerCase();
 		return (href.startsWith("http://forums.play.net/forums/dragonrealms/")
-				|| href.startsWith("http://www.play.net/remote/validation.asp")
-				|| href.startsWith("https://www.play.net/remote/validation.asp")
+				|| href.contains("www.play.net/remote/validation.asp")
 				|| href.startsWith("http://forums.play.net/return_from_pdn")
 				|| href.equals("http://forums.play.net/forums"))
+				// don't follow a single post
+				&& !FILTER.matcher(href).find()
 				&& !href.contains("/thread/")
 				&& !href.contains("reply_to=");
 	}
