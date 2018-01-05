@@ -3,6 +3,9 @@ package pw.ry4n.parser.model;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
+/**
+ * Forum Post POJO.
+ */
 public class Post {
 	private String folder;
 	private long postNumber;

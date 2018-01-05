@@ -1,6 +1,6 @@
 package pw.ry4n.db;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -14,37 +14,56 @@ import org.slf4j.LoggerFactory;
 import pw.ry4n.parser.model.Post;
 
 public class SQLiteDbServiceTest {
-	private static final Logger logger = LoggerFactory.getLogger(SQLiteDbServiceTest.class);
+	protected static final Logger logger = LoggerFactory.getLogger(SQLiteDbServiceTest.class);
 
 	private static final String DATABASE_NAME = "test.db";
 
 	private SQLiteDbServiceImpl service;
 
+	/**
+	 * Test service.store(Post).
+	 * 
+	 * @throws SQLException
+	 */
 	@Test
-	public void testInsertDuplicatePost() {
-		try {
-			// test data
+	public void testInsertPost() throws SQLException {
+		if (service == null) {
 			service = new SQLiteDbServiceImpl(DATABASE_NAME);
-			Post post = new Post("folder", 1L, "author", "1", "subject", "body");
+		}
 
-			// save duplicate post
-			service.store(post);
-			service.store(post);
+		// save post
+		Post post = new Post("folder", 1L, "author", "01/04/2017 9:13 AM CDT", "subject", "body");
+		service.store(post);
 
-			// check row count on database
-			Connection connection = service.getConnection();
-			Statement statement = connection.createStatement();
-			statement.setQueryTimeout(30); // set timeout to 30 sec.
-			ResultSet rs = statement.executeQuery("select count(*) as rows from post");
-			while (rs.next()) {
-				assertEquals(1L, rs.getLong("rows"));
-			}
+		// try again (should fail silently)
+		service.store(post);
 
-			// cleanup database
-			service.recreateSchema();
-			service.close();
-		} catch (SQLException e) {
-			logger.error("Error in testInsertDuplicatePost()", e);
+		verifyRowCount("post", 1L);
+
+		// cleanup database
+		service.recreateSchema();
+		service.close();
+	}
+
+	/**
+	 * Assert that the table has the specified number of rows.
+	 * 
+	 * @param table
+	 *            the table name
+	 * @param expectedRowCount
+	 *            expected row count
+	 * @throws SQLException
+	 */
+	private void verifyRowCount(String table, long expectedRowCount) throws SQLException {
+		Connection connection = service.getConnection();
+		Statement statement = connection.createStatement();
+		statement.setQueryTimeout(30); // set timeout to 30 sec.
+
+		// select count
+		ResultSet rs = statement.executeQuery("select count(*) as rows from " + table);
+		while (rs.next()) {
+			// assert count equals expectedCount
+			assertEquals(expectedRowCount, rs.getLong("rows"));
 		}
 	}
 }
