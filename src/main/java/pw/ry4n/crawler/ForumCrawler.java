@@ -59,7 +59,7 @@ public class ForumCrawler extends WebCrawler {
 		logger.debug("visited: {}", url);
 
 		// only attempt to parse forum pages
-		if (url.startsWith("http://forums.play.net/forums/dragonrealms/")) {
+		if (url.toLowerCase().startsWith("http://forums.play.net/forums/dragonrealms/")) {
 			if (page.getParseData() instanceof HtmlParseData) {
 				HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 				// attempt to parse posts on the page
