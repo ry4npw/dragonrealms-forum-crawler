@@ -5,14 +5,14 @@ import org.slf4j.LoggerFactory;
 
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
+import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
-import pw.ry4n.db.SQLiteDbService;
-import pw.ry4n.db.SQLiteDbServiceImpl;
+import pw.ry4n.parser.ForumHtmlParser;
 
 public class ForumCrawler extends WebCrawler {
 	private static final Logger logger = LoggerFactory.getLogger(ForumCrawler.class);
 
-	SQLiteDbService service = new SQLiteDbServiceImpl("forum.db");
+	ForumHtmlParser parser = new ForumHtmlParser();
 
 	/**
 	 * This method receives two parameters. The first parameter is the page in
@@ -44,6 +44,10 @@ public class ForumCrawler extends WebCrawler {
 	public void visit(Page page) {
 		String url = page.getWebURL().getURL();
  		logger.debug("URL: " + url);
-		service.store(page);
+ 
+ 		if (page.getParseData() instanceof HtmlParseData) {
+            HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
+            parser.parsePost(htmlParseData.getHtml());
+ 		}
 	}
 }

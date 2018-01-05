@@ -3,17 +3,12 @@ package pw.ry4n.db;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.uci.ics.crawler4j.crawler.Page;
-import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import pw.ry4n.parser.model.Post;
 
 public class SQLiteDbServiceImpl implements SQLiteDbService {
@@ -44,43 +39,14 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 		this.databaseName = databaseName;
 		connection = DriverManager.getConnection("jdbc:sqlite:" + databaseName);
 
-		connection.createStatement().executeUpdate("CREATE TABLE IF NOT EXISTS webpage ( "
-						+ "  id integer primary key autoincrement,"
-						+ "  html text," + "  text text,"
-						+ "  url varchar(4096),"
-						+ "  seen DATETIME DEFAULT CURRENT_TIMESTAMP" + ")");
+		connection.createStatement()
+				.executeUpdate("CREATE TABLE IF NOT EXISTS post ( " + "  id integer primary key autoincrement,"
+						+ "  folder text NOT NULL," + "  post_number varchar(10) NOT NULL," + "  author text,"
+						+ "  time text," + "  subject text," + "  body text,"
+						+ "  CONSTRAINT uc_post UNIQUE (post_number, folder)" + ")");
 
-		connection.createStatement().executeUpdate("CREATE TABLE IF NOT EXISTS post ( "
-				+ "  id integer primary key autoincrement,"
-				+ "  folder text NOT NULL,"
-				+ "  post_number varchar(10) NOT NULL,"
-				+ "  author text,"
-				+ "  time text,"
-				+ "  subject text,"
-				+ "  body text,"
-				+ "  CONSTRAINT uc_post UNIQUE (post_number, folder)"
-				+ ")");
-
-		insertWebpageStatement = connection.prepareStatement("insert into webpage(html, text, url) values(?,?,?)");
-		insertPostStatement = connection.prepareStatement("insert into post(folder, post_number, author, time, subject, body) values(?, ?, ?, ?, ?, ?)");
-		selectHtmlForUrlStatement = connection.prepareStatement("select html from webpage where url=?");
-		deleteWebpageByUrl = connection.prepareStatement("delete from webpage where url=?");
-	}
-
-	public void store(Page page) {
-		if (page.getParseData() instanceof HtmlParseData) {
-			try {
-
-				HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
-
-				insertWebpageStatement.setString(1, htmlParseData.getHtml());
-				insertWebpageStatement.setString(2, htmlParseData.getText());
-				insertWebpageStatement.setString(3, page.getWebURL().getURL());
-				insertWebpageStatement.executeUpdate();
-			} catch (SQLException e) {
-				logger.error("Error in store()", e);
-			}
-		}
+		insertPostStatement = connection.prepareStatement(
+				"insert into post(folder, post_number, author, time, subject, body) values(?, ?, ?, ?, ?, ?)");
 	}
 
 	public void close() {
@@ -94,16 +60,6 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 		}
 	}
 
-	public void recreateSchema() {
-		try {
-			connection.createStatement().executeUpdate("DROP TABLE IF EXISTS post");
-			connection.createStatement().executeUpdate("DROP TABLE IF EXISTS webpage");
-			createDatabase(this.databaseName);
-		} catch (SQLException e) {
-			logger.error("Error recreating schema", e);
-		}
-	}
-
 	public void store(Post post) {
 		try {
 			insertPostStatement.setString(1, post.getFolder());
@@ -114,49 +70,27 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 			insertPostStatement.setString(6, post.getBody());
 			insertPostStatement.executeUpdate();
 		} catch (SQLException e) {
-			logger.error("Error in store()", e);
-		}
-	}
-
-	public List<String> getAllWebpageUrls() {
-		List<String> urls = new ArrayList<>();
-
-		try {
-			ResultSet rs = connection.createStatement().executeQuery("select url from webpage");
-			while (rs.next()) {
-				urls.add(rs.getString("url"));
+			logger.error("duplicate post: " + post);
+			try {
+				insertPostStatement.close();
+				insertPostStatement = connection.prepareStatement(
+						"insert into post(folder, post_number, author, time, subject, body) values(?, ?, ?, ?, ?, ?)");
+			} catch (SQLException e2) {
+				logger.error("could not recreate statement.");
 			}
-		} catch (SQLException e) {
-			logger.error("Error in getAllWebpageUrls()", e);
 		}
-
-		return urls;
 	}
 
-	@Override
-	public List<String> getHtmlForUrl(String url) {
-		List<String> htmls = new ArrayList<>();
-
+	void recreateSchema() {
 		try {
-			selectHtmlForUrlStatement.setString(1, url);
-			ResultSet rs = selectHtmlForUrlStatement.executeQuery();
-			while (rs.next()) {
-				htmls.add(rs.getString("html"));
-			}
+			connection.createStatement().executeUpdate("DROP TABLE IF EXISTS post");
+			createDatabase(this.databaseName);
 		} catch (SQLException e) {
-			logger.error("Error in getHtmlForUrl()", e);
+			logger.error("Error recreating schema", e);
 		}
-
-		return htmls;
 	}
 
-	@Override
-	public void deleteWebpageByUrl(String url) {
-		try {
-			deleteWebpageByUrl.setString(1, url);
-			deleteWebpageByUrl.executeUpdate();
-		} catch (SQLException e) {
-			logger.error("Error in deleteWebpageByUrl()", e);
-		}
+	Connection getConnection() {
+		return connection;
 	}
 }

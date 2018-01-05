@@ -27,36 +27,47 @@ public class Post {
 	public String getAuthor() {
 		return author;
 	}
+
 	public void setAuthor(String author) {
 		this.author = author;
 	}
+
 	public long getPostNumber() {
 		return postNumber;
 	}
+
 	public void setPostNumber(long postNumber) {
 		this.postNumber = postNumber;
 	}
+
 	public String getFolder() {
 		return folder;
 	}
+
 	public void setFolder(String folder) {
 		this.folder = folder;
 	}
+
 	public String getTime() {
 		return time;
 	}
+
 	public void setTime(String time) {
 		this.time = time;
 	}
+
 	public String getSubject() {
 		return subject;
 	}
+
 	public void setSubject(String subject) {
 		this.subject = subject;
 	}
+
 	public String getBody() {
 		return body;
 	}
+
 	public void setBody(String body) {
 		this.body = body;
 	}
