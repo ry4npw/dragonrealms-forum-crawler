@@ -77,7 +77,7 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 			insertPostStatement.setString(6, post.getBody());
 			insertPostStatement.executeUpdate();
 		} catch (SQLException e) {
-			logger.warn("duplicate post: " + post);
+			logger.warn("duplicate post: Post[folder={},post_number={}]", post.getFolder(), post.getPostNumber());
 			try {
 				insertPostStatement.close();
 				prepareInsertPost();
