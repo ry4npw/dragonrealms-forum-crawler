@@ -116,12 +116,15 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 
 			// create FTS table
 			connection.createStatement().executeUpdate(
-					"CREATE VIRTUAL TABLE IF NOT EXISTS forumdata (folder, post_number, author, time, subject, body)");
+					"CREATE VIRTUAL TABLE IF NOT EXISTS forumdata USING fts4(folder, post_number, author, time, subject, body)");
 
 			// copy data
 			connection.createStatement().executeUpdate(
-					"INSERT INTO forumdata SELECT (folder, post_number, author, time, subject, body) FROM post");
+					"INSERT INTO forumdata SELECT folder, post_number, author, time, subject, body FROM post");
 			connection.createStatement().executeUpdate("DROP TABLE post");
+
+			// optimize the FTS table
+			connection.createStatement().executeUpdate("INSERT INTO forumdata(forumdata) VALUES('optimize')");
 
 			// reduce disk size
 			connection.createStatement().executeUpdate("VACUUM");
