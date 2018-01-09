@@ -26,7 +26,7 @@ $ java -jar target/dragonrealms-forum-crawler.jar
 
 ## 3. Running locally
 
-If you have PHP installed (PHP is installed by default on Mac OS X), you can run the front end using the following commands:
+Copy the `forum.db` from above to the src/main/webapp directory, then serve up the contents of src/main/webapp. If you have PHP installed (PHP is installed by default on Mac OS X), you can use the following commands:
 
 ```
 $ mv forum.db src/main/webapp
