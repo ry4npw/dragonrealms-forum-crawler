@@ -25,7 +25,7 @@ gtag('config', 'UA-42461382-1');
 </head>
 <body>
 <h1>DragonRealms Forum Search</h1>
-<p class="small">A simple text search for <a href="https://forums.play.net/forums/DragonRealms/view">Play.net DragonRealms Forums</a>. The search index was created on January 4, 2018; posts after this date are not included in the results.</p>
+<p class="small">A simple text search for <a href="https://forums.play.net/forums/DragonRealms/view">Play.net DragonRealms Forums</a>. The search index was created on <span id="date"></span>; posts after this date are not included in the results.</p>
 
 <!-- Search box -->
 <span class="error"></span>
@@ -45,6 +45,20 @@ gtag('config', 'UA-42461382-1');
   <p class="small">Source code on <a href="https://github.com/ry4npw/dragonrealms-forum-crawler">github.com</a>.</p>
 </footer> 
 
+<script>
+// AJAX call to get search index created date
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+		var modifieddate = new Date(parseInt(this.responseText) * 1000),
+		locale = "en-us",
+		month = modifieddate.toLocaleString(locale, {month: "long"});
+        document.getElementById("date").innerHTML = month + ' ' + modifieddate.getDate();
+    }
+};
+xhttp.open("GET", "date.php", true);
+xhttp.send();
+</script>
 <script>
 /*
  * PureJS directive mapping the HTML template to JSON returned by search.
