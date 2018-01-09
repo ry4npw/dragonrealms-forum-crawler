@@ -107,7 +107,7 @@ function submit() {
 
 	var searchString =  document.getElementById("search").value;
 
-	window.dataLayer.push({
+	gtag({
 		'event': 'search',
 		'term': searchString
 	});
