@@ -107,9 +107,8 @@ function submit() {
 
 	var searchString =  document.getElementById("search").value;
 
-	gtag({
-		'event': 'search',
-		'term': searchString
+	gtag('event': 'search', {
+		'search_term': searchString
 	});
 
 	// make sure user typed at least 3 characters
