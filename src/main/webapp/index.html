@@ -107,6 +107,11 @@ function submit() {
 
 	var searchString =  document.getElementById("search").value;
 
+	window.dataLayer.push({
+		'event': 'search',
+		'term': searchString
+	});
+
 	// make sure user typed at least 3 characters
 	if (searchString.length < 2) {
 		document.getElementsByClassName("error")[0].innerHTML = 'Your search must be at least 2 characters.';
