@@ -36,15 +36,15 @@ public class Launcher {
 		/*
 		 * Seed URLs that are the first pages fetched and then the crawler
 		 * starts following links found in these pages
-		 * 
+		 *
 		 * One enters the DragonRealms forums through the /return_from_pdn URL.
 		 * This URL takes the following parameters:
 		 *
-		 * - "tcode" is the current time formatted as "yyyyMMddHHmmss"
-		 * 
-		 * - "num" appears to be a number between 10000 and 99999?
-		 * 
-		 * - "username" and "authentication" are not required fields
+		 * "tcode" is the current time formatted as "yyyyMMddHHmmss"
+		 *
+		 * "num" appears to be a number between 10000 and 99999?
+		 *
+		 * "username" and "authentication" are not required fields
 		 */
 		controller.addSeed("http://forums.play.net/return_from_pdn?username=&tcode=" + sdf.format(new Date())
 				+ "&authentication=&num=" + 10000 + (new Random()).nextInt(89999));
