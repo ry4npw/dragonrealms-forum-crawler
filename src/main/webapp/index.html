@@ -21,11 +21,10 @@ function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'UA-42461382-1');
 </script>
-<script src="js/pure.js"></script>
 </head>
 <body>
 <h1>DragonRealms Forum Search</h1>
-<p class="small">A simple text search for <a href="https://forums.play.net/forums/DragonRealms/view">Play.net DragonRealms Forums</a>. The search index was created on <span id="date"></span>; posts after this date are not included in the results.</p>
+<p class="small">A simple text search for <a href="https://forums.play.net/forums/DragonRealms/view">Play.net DragonRealms Forums</a>. The search index includes <span id="numberPosts"></span> posts and was created on <span id="createdDate"></span>.</p>
 
 <!-- Search box -->
 <span class="error"></span>
@@ -45,18 +44,25 @@ gtag('config', 'UA-42461382-1');
   <p class="small">Source code on <a href="https://github.com/ry4npw/dragonrealms-forum-crawler">github.com</a>.</p>
 </footer> 
 
+<script src="js/pure.min.js"></script>
 <script>
 // AJAX call to get search index created date
 var xhttp = new XMLHttpRequest();
 xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-		var modifieddate = new Date(parseInt(this.responseText) * 1000),
+	if (this.readyState == 4 && this.status == 200) {
+		var result = JSON.parse(this.responseText);
+
+		// number of posts
+		document.getElementById("numberPosts").innerHTML = result.rows;
+
+		// modified date
+		var modifieddate = new Date(result.indexed * 1000),
 		locale = "en-us",
 		month = modifieddate.toLocaleString(locale, {month: "long"});
-        document.getElementById("date").innerHTML = month + ' ' + modifieddate.getDate();
-    }
+		document.getElementById("createdDate").innerHTML = month + ' ' + modifieddate.getDate() + ', ' + modifieddate.getFullYear();
+	}
 };
-xhttp.open("GET", "date.php", true);
+xhttp.open("GET", "stats.php", true);
 xhttp.send();
 </script>
 <script>
