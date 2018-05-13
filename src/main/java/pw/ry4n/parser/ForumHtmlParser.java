@@ -1,5 +1,7 @@
 package pw.ry4n.parser;
 
+import java.util.Map;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -25,6 +27,11 @@ import pw.ry4n.parser.model.Post;
 public class ForumHtmlParser {
 	private static final Logger logger = LoggerFactory.getLogger(ForumHtmlParser.class);
 	private SQLiteDbService service = new SQLiteDbServiceImpl("forum.db");
+	private Map<String, Long> lastScanFolderSize;
+
+	public ForumHtmlParser(Map<String, Long> lastScanFolderSize) {
+		this.lastScanFolderSize = lastScanFolderSize;
+	}
 
 	/**
 	 * Parse the HTML for forum posts and persist them.
@@ -47,7 +54,11 @@ public class ForumHtmlParser {
 			logger.debug("saving " + postElements.size() + " posts on page.");
 			for (Element postElement : postElements) {
 				// persist each post
-				service.store(createPost(folderString, postElement));
+				Post post = createPost(folderString, postElement);
+				Long maxPostNumber = lastScanFolderSize.get(post.getFolder().toLowerCase().replace(" ", "%20").replace("`", "%60"));
+				if (maxPostNumber == null || post.getPostNumber() > maxPostNumber) {
+					service.store(post);
+				}
 			}
 		}
 	}

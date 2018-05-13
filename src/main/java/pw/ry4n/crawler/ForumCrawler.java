@@ -1,5 +1,6 @@
 package pw.ry4n.crawler;
 
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
@@ -9,6 +10,8 @@ import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
+import pw.ry4n.db.SQLiteDbService;
+import pw.ry4n.db.SQLiteDbServiceImpl;
 import pw.ry4n.parser.ForumHtmlParser;
 
 public class ForumCrawler extends WebCrawler {
@@ -16,7 +19,19 @@ public class ForumCrawler extends WebCrawler {
 
 	private static final Pattern FILTER = Pattern.compile("\\/view\\/\\d+(\\?force_expansion=true)?$");
 
-	private ForumHtmlParser parser = new ForumHtmlParser();
+	private ForumHtmlParser parser;
+
+	private static final SQLiteDbService service = new SQLiteDbServiceImpl("forum.db");
+
+	private Map<String, Long> lastScanFolderSize;
+
+//	private static final Set<String> pagesToNotParse = new HashSet<>();
+
+	public ForumCrawler() {
+		// populate the list
+		lastScanFolderSize = service.getUniqueFolderNamesAndMaxPostNumber();
+		parser = new ForumHtmlParser(lastScanFolderSize);
+	}
 
 	/**
 	 * Our implementation to determine whether or not to visit the provided URL.
@@ -29,7 +44,7 @@ public class ForumCrawler extends WebCrawler {
 	 */
 	@Override
 	public boolean shouldVisit(Page referringPage, WebURL url) {
-		String href = url.getURL().toLowerCase();
+		String href = url.getURL().toLowerCase().replace("%20%20", "%20");
 		return (
 		// visit the authentication pages to get the required cookies
 		(href.contains("www.play.net/remote/validation.asp")
@@ -51,6 +66,30 @@ public class ForumCrawler extends WebCrawler {
 				&& !href.endsWith("&page=1");
 	}
 
+//	private boolean shouldVisitPageNumber(String href) {
+//		for (String key : lastScanFolderSize.keySet()) {
+//			if (href.contains(key)) {
+//				if (href.endsWith("/view") && lastScanFolderSize.get(key).intValue() > 0) {
+//					// need to visit at least the first page
+//					pagesToNotParse.add(href);
+//					return true;
+//				}
+//
+//				// check for page > maxPostNumber / 40
+//				int pagePosition = href.lastIndexOf("page=");
+//				if (pagePosition > -1) {
+//					int pageNumber = Integer.parseInt(href.substring(pagePosition + 5));
+//					int processedPages = lastScanFolderSize.get(key).intValue() / 40;
+//					if (pageNumber < processedPages) {
+//						return false;
+//					}
+//				}
+//				break;
+//			}
+//		}
+//		return true;
+//	}
+
 	/**
 	 * This function is called for all visited pages.
 	 * 
@@ -62,8 +101,10 @@ public class ForumCrawler extends WebCrawler {
 		String url = page.getWebURL().getURL();
 		logger.debug("visited: {}", url);
 
+		String lowercaseUrl = url.toLowerCase();
+
 		// only attempt to parse forum pages
-		if (url.toLowerCase().startsWith("http://forums.play.net/forums/dragonrealms/")) {
+		if (lowercaseUrl.startsWith("http://forums.play.net/forums/dragonrealms/")) {
 			if (page.getParseData() instanceof HtmlParseData) {
 				HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 				// attempt to parse posts on the page

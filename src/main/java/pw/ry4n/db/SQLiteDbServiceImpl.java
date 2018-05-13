@@ -1,9 +1,14 @@
 package pw.ry4n.db;
 
+import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
@@ -87,6 +92,45 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 		}
 	}
 
+	@Override
+	public Map<String, Long> getUniqueFolderNamesAndMaxPostNumber() {
+		Map<String,Long> results = new HashMap<>();
+		try {
+			Statement statement = connection.createStatement();
+			ResultSet folderResultSet = statement.executeQuery("select distinct folder from post");
+			while (folderResultSet.next()) {
+				String folder = folderResultSet.getString("folder");
+
+				if (folder != null) {
+					// get the max postNumber
+					PreparedStatement maxPostNumberStatement = connection.prepareStatement("select max(cast(post_number as int)) as max_post_number from post where folder = ?");
+					maxPostNumberStatement.setString(1, folder);
+					ResultSet postNumberResultSet = maxPostNumberStatement.executeQuery();
+					long maxPostNumber = 0;
+					if (postNumberResultSet.next()){
+						maxPostNumber = postNumberResultSet.getLong("max_post_number");
+					}
+					if (maxPostNumber > 0) {
+						// add the results to the map
+						results.put(toLowerCaseAndEscapeUrl(folder), maxPostNumber);
+					}
+					postNumberResultSet.close();
+				}
+			}
+			folderResultSet.close();
+		} catch (SQLException e) {
+			logger.error("Error getting unique folders from database.", e);
+		} catch (UnsupportedEncodingException e) {
+			logger.error("unsupported encoding");
+		}
+
+		return results;
+	}
+
+	private String toLowerCaseAndEscapeUrl(String folder) throws UnsupportedEncodingException {
+		return folder.toLowerCase().replace(" ", "%20").replace("`", "%60");
+	}
+
 	/**
 	 * Package private method to refresh the schema between unit tests.
 	 */
@@ -121,7 +165,6 @@ public class SQLiteDbServiceImpl implements SQLiteDbService {
 			// copy data
 			connection.createStatement().executeUpdate(
 					"INSERT INTO forumdata SELECT folder, post_number, author, time, subject, body FROM post");
-			connection.createStatement().executeUpdate("DROP TABLE post");
 
 			// optimize the FTS table
 			connection.createStatement().executeUpdate("INSERT INTO forumdata(forumdata) VALUES('optimize')");
