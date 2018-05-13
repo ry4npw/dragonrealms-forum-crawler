@@ -49,6 +49,7 @@ public class Launcher {
 		controller.addSeed("http://forums.play.net/return_from_pdn?username=&tcode=" + sdf.format(new Date())
 				+ "&authentication=&num=" + 10000 + (new Random()).nextInt(89999));
 		controller.addSeed("http://forums.play.net/forums/view_type?type=legacy");
+		controller.addSeed("http://forums.play.net/forums/DragonRealms/view");
 
 		/*
 		 * Start the crawl. This is a blocking operation, meaning that your code
