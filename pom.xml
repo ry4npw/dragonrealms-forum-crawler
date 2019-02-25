@@ -17,7 +17,7 @@
 		<crawler4j.version>4.4.0</crawler4j.version>
 		<jsoup.version>1.11.3</jsoup.version>
 		<junit.version>4.12</junit.version>
-		<sqlite-jdbc.version>3.21.0.1</sqlite-jdbc.version>
+		<sqlite-jdbc.version>3.25.2</sqlite-jdbc.version>
 
 		<!-- maven plugin versions -->
 		<maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>

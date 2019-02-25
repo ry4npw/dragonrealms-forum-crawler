@@ -40,3 +40,17 @@ Navigate to http://localhost:8000 in your browser.
 
 Copy the forum.db and all files in src/main/webapp to your PHP server.
 
+### 4a. (Optional) Remove post table from deployed forum.db
+
+The forum.db contains two tables: post and forumdata.  The post table is what is used when crawling to keep track of known posts.  The forumdata table is created at the end of a crawl as a full text search virtual table.  PHP only cares about forumdata, so for the PHP server you can drop the post table, reducing the deployed forum.db by about 40%.
+
+```
+$ cp forum.db forum-min.db
+$ sqlite3 forum-min.db
+sqlite> DROP TABLE IF EXISTS post;
+sqlite> VACUUM;
+sqlite> .exit
+```
+
+Upload the forum-min.db instead of forum.db to your PHP server and rename it to `forum.db`.
+
