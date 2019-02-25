@@ -79,7 +79,7 @@ var directive = {
 			'a@href': function(x) {
 				return 'https://forums.play.net/forums/'
 						// replace spaces with %20
-						+ x.item.folder.replace(/\s/g, '%20')
+						+ x.item.folder.replace(/\s/g, '%20').replace(/\?/g, '%3F')
 						+ '/view/' + x.item.post_id;
 			},
 			'.date': 'result.date',
